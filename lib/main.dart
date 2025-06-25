@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kurakani/pages/login_page.dart';
+import 'package:kurakani/auth/login_or_register.dart';
 import 'package:kurakani/themes/light_mode.dart';
 
 void main() {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      home: LoginOrRegister(),
       theme: lightMode,
     );
   }

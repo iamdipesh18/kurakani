@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:kurakani/components/labeled_textfield.dart';
 import 'package:kurakani/components/my_button.dart';
 
-class LoginPage extends StatelessWidget {
+class RegisterPage extends StatelessWidget {
   //Email and Password Controller
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmedPasswordController =
+      TextEditingController();
 
-  //tap to goto register page
+  //tap to goto login page
   final void Function()? onTap;
 
-  LoginPage({super.key, required this.onTap});
+  RegisterPage({super.key, required this.onTap});
 
   //login method
   void login() {
@@ -41,7 +43,7 @@ class LoginPage extends StatelessWidget {
 
             //welcomeback message
             Text(
-              "Welcome Back, You've Been Missed!",
+              "Lets Create an Account for You!!",
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontSize: 16,
@@ -52,34 +54,41 @@ class LoginPage extends StatelessWidget {
 
             //email text field
             LabeledTextField(
-              labelText: "Email",
-              hintText: "Enter your email",
+              labelText: 'Email',
+              hintText: 'Enter Email',
               obscureText: false,
               controller: _emailController,
             ),
-
             const SizedBox(height: 10),
             //password text field
             LabeledTextField(
-              labelText: "Password",
-              hintText: "Enter your Password",
+              labelText: 'Password',
+              hintText: 'Enter Password',
               obscureText: true,
               controller: _passwordController,
+            ),
+            const SizedBox(height: 10),
+            //Confirm password text field
+            LabeledTextField(
+              labelText: 'Confirm Passwoord',
+              hintText: 'Enter Your Password',
+              obscureText: true,
+              controller: _confirmedPasswordController,
             ),
 
             const SizedBox(height: 25),
 
-            //login button
-            MyButton(text: 'Login', onTap: login),
+            //Register button
+            MyButton(text: 'Register', onTap: register),
 
             const SizedBox(height: 25),
 
-            //register message
+            //Login message
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Not a Member? ",
+                  "Already a Member? ",
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontSize: 16,
@@ -88,7 +97,7 @@ class LoginPage extends StatelessWidget {
                 GestureDetector(
                   onTap: onTap,
                   child: Text(
-                    "Register Now",
+                    "Login Now",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontSize: 16,
