@@ -46,7 +46,7 @@ class LoginPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height:50),
+            const SizedBox(height:25),
 
             //email text field
             MyTextfield(
