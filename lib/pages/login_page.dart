@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kurakani/components/my_button.dart';
 import 'package:kurakani/components/my_textfield.dart';
 
 class LoginPage extends StatelessWidget {
@@ -7,6 +8,17 @@ class LoginPage extends StatelessWidget {
   final TextEditingController _passwordController=TextEditingController();
 
   LoginPage({super.key});
+
+  //login method
+  void login(){
+    //method of login  with authentication
+  }
+
+  //register method
+  void register(){
+    //method of register with firebase 
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,12 +62,44 @@ class LoginPage extends StatelessWidget {
                 controller: _passwordController,
             ),
 
-            const SizedBox(height:10),
+            const SizedBox(height:25),
 
             //login button
+            MyButton(
+              text: 'Login', 
+              onTap: login,
+              ),
 
+            const SizedBox(height:25),
 
-            //register button
+            //register message
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Not a Member? ",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  "Register Now",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            // //register button
+            //   MyButton(
+            //   text: 'Register', 
+            //   onTap: register,
+            //   ),
+
           ],
         ),
       ),
