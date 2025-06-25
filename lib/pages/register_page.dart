@@ -1,27 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:kurakani/auth/auth_service.dart';
 import 'package:kurakani/components/labeled_textfield.dart';
 import 'package:kurakani/components/my_button.dart';
 
-class RegisterPage extends StatelessWidget {
-  //Email and Password Controller
+class RegisterPage extends StatefulWidget {
+  final void Function()? onTap;
+  const RegisterPage({super.key, required this.onTap});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmedPasswordController =
       TextEditingController();
 
-  //tap to goto login page
-  final void Function()? onTap;
+  void register() async {
+    if (_passwordController.text != _confirmedPasswordController.text) {
+      showDialog(
+        context: context,
+        builder: (context) =>
+            const AlertDialog(title: Text("Passwords do not match")),
+      );
+      return;
+    }
 
-  RegisterPage({super.key, required this.onTap});
+    try {
+      final auth = AuthService();
+      await auth.signUpWithEmailAndPassword(
+        _emailController.text,
+        _passwordController.text,
+      );
+      if (!mounted) return;
 
-  //login method
-  void login() {
-    //method of login  with authentication
-  }
-
-  //register method
-  void register() {
-    //method of register with firebase
+      // Optional: Navigate or show success message
+    } catch (e) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Registration Failed"),
+          content: Text(e.toString()),
+        ),
+      );
+    }
   }
 
   @override
@@ -29,91 +53,74 @@ class RegisterPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            //Logo
-            Icon(
-              Icons.message,
-              size: 60,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-
-            const SizedBox(height: 50),
-
-            //welcomeback message
-            Text(
-              "Lets Create an Account for You!!",
-              style: TextStyle(
+        child: SingleChildScrollView(
+          // For smaller screens
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.message,
+                size: 60,
                 color: Theme.of(context).colorScheme.primary,
-                fontSize: 16,
               ),
-            ),
-
-            const SizedBox(height: 25),
-
-            //email text field
-            LabeledTextField(
-              labelText: 'Email',
-              hintText: 'Enter Email',
-              obscureText: false,
-              controller: _emailController,
-            ),
-            const SizedBox(height: 10),
-            //password text field
-            LabeledTextField(
-              labelText: 'Password',
-              hintText: 'Enter Password',
-              obscureText: true,
-              controller: _passwordController,
-            ),
-            const SizedBox(height: 10),
-            //Confirm password text field
-            LabeledTextField(
-              labelText: 'Confirm Passwoord',
-              hintText: 'Enter Your Password',
-              obscureText: true,
-              controller: _confirmedPasswordController,
-            ),
-
-            const SizedBox(height: 25),
-
-            //Register button
-            MyButton(text: 'Register', onTap: register),
-
-            const SizedBox(height: 25),
-
-            //Login message
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Already a Member? ",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 16,
-                  ),
+              const SizedBox(height: 50),
+              Text(
+                "Let's Create an Account for You!",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 16,
                 ),
-                GestureDetector(
-                  onTap: onTap,
-                  child: Text(
-                    "Login Now",
+              ),
+              const SizedBox(height: 25),
+              LabeledTextField(
+                labelText: 'Email',
+                hintText: 'Enter Email',
+                obscureText: false,
+                controller: _emailController,
+              ),
+              const SizedBox(height: 10),
+              LabeledTextField(
+                labelText: 'Password',
+                hintText: 'Enter Password',
+                obscureText: true,
+                controller: _passwordController,
+              ),
+              const SizedBox(height: 10),
+              LabeledTextField(
+                labelText: 'Confirm Password',
+                hintText: 'Re-enter Password',
+                obscureText: true,
+                controller: _confirmedPasswordController,
+              ),
+              const SizedBox(height: 25),
+              MyButton(text: 'Register', onTap: register),
+              const SizedBox(height: 25),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Already a Member? ",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
-            ),
-
-            // //register button
-            //   MyButton(
-            //   text: 'Register',
-            //   onTap: register,
-            //   ),
-          ],
+                  GestureDetector(
+                    onTap: widget.onTap,
+                    child: Text(
+                      "Login Now",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
