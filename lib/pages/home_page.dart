@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kurakani/auth/auth_service.dart';
+import 'package:kurakani/components/my_drawer.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -21,7 +22,7 @@ class HomePage extends StatelessWidget {
           IconButton(onPressed: logout, icon: Icon(Icons.logout)),
         ],
       ),
-      drawer: Drawer(),
+      drawer: MyDrawer(),
     );
   }
 }
