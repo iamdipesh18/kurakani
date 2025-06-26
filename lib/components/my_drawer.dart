@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:kurakani/auth/auth_service.dart';
 import 'package:kurakani/pages/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
+
+    void logout() {
+    //get the auth service
+    final auth = AuthService();
+    auth.signOut();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +69,7 @@ class MyDrawer extends StatelessWidget {
             child: ListTile(
               title: Text('L O G O U T'),
               leading: Icon(Icons.logout),
-              onTap: () {},
+              onTap: logout,
             ),
           ),
         ],
