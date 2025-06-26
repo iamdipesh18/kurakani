@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:kurakani/auth/auth_gate.dart';
+import 'package:kurakani/services/auth/auth_gate.dart';
 import 'package:kurakani/firebase_options.dart';
 import 'package:kurakani/themes/light_mode.dart';
 

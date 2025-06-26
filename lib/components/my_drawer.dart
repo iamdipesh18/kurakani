@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kurakani/auth/auth_service.dart';
+import 'package:kurakani/services/auth/auth_service.dart';
 import 'package:kurakani/pages/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {

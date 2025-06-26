@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kurakani/auth/auth_service.dart';
+import 'package:kurakani/services/auth/auth_service.dart';
 import 'package:kurakani/components/labeled_textfield.dart';
 import 'package:kurakani/components/my_button.dart';
 
