@@ -24,7 +24,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildUserList(BuildContext context) {
     return StreamBuilder(
-      stream: _chatService.getUsersStream(),
+      stream: _chatService.getUsersStreamExcludingBlocked(),
       builder: (context, snapshot) {
         //error
         if (snapshot.hasError) {
@@ -66,6 +66,7 @@ class HomePage extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => ChatPage(
               receiverEmail: userData["email"],
+              receiverID: userData["uid"],
             ),
           ),
         );
