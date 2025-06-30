@@ -9,12 +9,12 @@ import 'package:kurakani/services/chat/chat_service.dart';
 /// The private chat screen between two users.
 class ChatPage extends StatefulWidget {
   final String receiverEmail;
-  final String receiverID;
+  final String receiverId; // ✅ updated naming
 
   const ChatPage({
     super.key,
     required this.receiverEmail,
-    required this.receiverID,
+    required this.receiverId,
   });
 
   @override
@@ -42,17 +42,17 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  /// Sends a message and scrolls to the bottom
+  /// Sends a message and scrolls to the bottom.
   void sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverID, text);
+      await _chatService.sendMessage(widget.receiverId, text); // ✅ updated
       _messageController.clear();
       _scrollToBottom();
     }
   }
 
-  /// Opens the bottom sheet with "Report" or "Block" options
+  /// Bottom sheet for actions like Report or Block
   void _showOptionsSheet() {
     showModalBottomSheet(
       context: context,
@@ -91,7 +91,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  /// First confirmation dialog for reporting
+  /// Report confirmation dialog
   void _confirmReport() {
     showDialog(
       context: context,
@@ -99,10 +99,7 @@ class _ChatPageState extends State<ChatPage> {
         title: const Text("Report User"),
         content: const Text("Are you sure you want to report this user?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("No"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("No")),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -115,7 +112,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  /// Second dialog asking for the reason of reporting
+  /// Reason input for reporting
   void _showReportReasonDialog() {
     final controller = TextEditingController();
 
@@ -132,15 +129,12 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
               final reason = controller.text.trim();
               if (reason.isNotEmpty) {
-                await _chatService.reportUser(widget.receiverID, reason);
+                await _chatService.reportUser(widget.receiverId, reason); // ✅ updated
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("User has been reported")),
@@ -154,7 +148,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  /// Confirmation dialog to block a user
+  /// Confirmation to block a user
   void _confirmBlock() {
     showDialog(
       context: context,
@@ -162,18 +156,15 @@ class _ChatPageState extends State<ChatPage> {
         title: const Text("Block User"),
         content: const Text("Are you sure you want to block this user?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("No"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("No")),
           TextButton(
             onPressed: () async {
-              await _chatService.blockUser(widget.receiverID);
+              await _chatService.blockUser(widget.receiverId); // ✅ updated
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("User has been blocked")),
               );
-              Navigator.pop(context); // Go back to home after block
+              Navigator.pop(context); // Go back after block
             },
             child: const Text("Yes"),
           ),
@@ -182,55 +173,64 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  /// Builds the stream of chat messages
+  /// Message stream builder
   Widget _buildMessageList() {
-    final currentUserId = _authService.getCurrentUser()!.uid;
+    final currentUserId = _authService.getCurrentUser()?.uid;
+    if (currentUserId == null) {
+      return const Center(child: Text("Not logged in"));
+    }
 
     return StreamBuilder<QuerySnapshot>(
-      stream: _chatService.getMessages(currentUserId, widget.receiverID),
+      stream: _chatService.getMessages(currentUserId, widget.receiverId), // ✅ updated
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(child: Text("Something went wrong"));
-        }
+        if (snapshot.hasError) return const Center(child: Text("Something went wrong"));
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         final docs = snapshot.data!.docs;
-
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
         return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           itemCount: docs.length,
-          itemBuilder: (context, index) {
-            return _buildMessageItem(docs[index]);
-          },
+          itemBuilder: (context, index) => _buildMessageItem(docs[index]),
         );
       },
     );
   }
 
-  /// Renders each message bubble
+  /// Renders each individual message bubble with safety checks
   Widget _buildMessageItem(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final isMe = data['senderId'] == _authService.getCurrentUser()!.uid;
+    final raw = doc.data();
+    if (raw == null || raw is! Map<String, dynamic>) return const SizedBox();
 
-    final formattedTime = DateFormat(
-      'h:mm a',
-    ).format((data['timestamp'] as Timestamp).toDate());
+    final data = raw;
+    final currentUser = _authService.getCurrentUser();
+    if (currentUser == null) return const SizedBox();
+
+    final isMe = data['senderId'] == currentUser.uid;
+    final message = data['message'] ?? '[No message]';
+    final timestamp = data['timestamp'];
+    final receiverId = data['receiverId'] ?? 'unknown'; // ✅ match Firestore key
+    final receiverEmail = widget.receiverEmail;
+
+    // Format time safely
+    final formattedTime = timestamp is Timestamp
+        ? DateFormat('h:mm a').format(timestamp.toDate())
+        : '';
 
     return ChatBubble(
-      message: data['message'],
+      message: message,
       isMe: isMe,
       timestamp: formattedTime,
-      receiverId: widget.receiverID,
-      receiverEmail: widget.receiverEmail,
+      receiverId: receiverId,
+      receiverEmail: receiverEmail,
     );
   }
 
-  /// Textfield + Send button UI
+  /// Text input + Send button
   Widget _buildUserInput() {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -280,7 +280,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // dismiss keyboard
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.receiverEmail),

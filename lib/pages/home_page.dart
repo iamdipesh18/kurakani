@@ -4,9 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:kurakani/components/my_drawer.dart';
 import 'package:kurakani/pages/chat_page.dart';
-import 'package:kurakani/pages/settings_page.dart';
 import 'package:kurakani/services/chat/chat_service.dart';
-import 'package:kurakani/services/auth/auth_service.dart';
 
 /// ✅ HomePage displays a list of users available for chat
 /// with last message preview and timestamp inside beautiful cards.
@@ -19,7 +17,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ChatService _chatService = ChatService();
-  final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
@@ -36,8 +33,11 @@ class _HomePageState extends State<HomePage> {
     final userDoc = await _firestore.collection("Users").doc(user.uid).get();
     final data = userDoc.data();
 
-    if (data == null || !(data).containsKey("username") || (data['username'] as String).isEmpty) {
-      await Future.delayed(Duration.zero); // Ensure build context is ready
+    // Check if username field is missing or empty
+    if (data == null ||
+        !(data).containsKey("username") ||
+        (data['username'] as String).isEmpty) {
+      await Future.delayed(Duration.zero); // Ensure context is ready
       _showUsernameDialog(isInitialPrompt: true);
     }
   }
@@ -47,16 +47,21 @@ class _HomePageState extends State<HomePage> {
     final controller = TextEditingController();
 
     showDialog(
-      barrierDismissible: !isInitialPrompt, // Prevent dismiss on first-time prompt
+      barrierDismissible:
+          !isInitialPrompt, // Don't allow dismiss on initial prompt
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isInitialPrompt ? "Choose a username" : "Change your username"),
+        title: Text(
+          isInitialPrompt ? "Choose a username" : "Change your username",
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(isInitialPrompt
-                ? "This will be your permanent username."
-                : "Update your username. Others will see this name."),
+            Text(
+              isInitialPrompt
+                  ? "This will be your permanent username."
+                  : "Update your username. Others will see this name.",
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
@@ -82,11 +87,14 @@ class _HomePageState extends State<HomePage> {
               final user = FirebaseAuth.instance.currentUser;
               if (user == null) return;
 
+              // Save username to Firestore under Users collection
               final userDoc = _firestore.collection("Users").doc(user.uid);
-              await userDoc.set({"username": username}, SetOptions(merge: true));
+              await userDoc.set({
+                "username": username,
+              }, SetOptions(merge: true));
               if (!mounted) return;
               Navigator.pop(context);
-              setState(() {});
+              setState(() {}); // Refresh UI after username set
             },
             child: const Text("Save"),
           ),
@@ -150,16 +158,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// ✅ Builds each user card with avatar, username, last message preview and timestamp.
-  Widget _buildUserCard(
-    Map<String, dynamic> userData,
-    BuildContext context,
-  ) {
+  Widget _buildUserCard(Map<String, dynamic> userData, BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser!;
     if (currentUser.uid == userData["uid"]) {
       return const SizedBox.shrink(); // Don't show self
     }
 
-    return FutureBuilder<Map<String, dynamic>?> (
+    return FutureBuilder<Map<String, dynamic>?>(
       future: _chatService.getLastMessageWithMeta(
         currentUser.uid,
         userData['uid'],
@@ -185,12 +190,14 @@ class _HomePageState extends State<HomePage> {
 
         return GestureDetector(
           onTap: () {
+            // Navigate to ChatPage, passing correct argument names (receiverId, receiverEmail)
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => ChatPage(
-                  receiverEmail: userData["email"],
-                  receiverID: userData["uid"],
+                  receiverEmail: userData["email"], // user email
+                  receiverId:
+                      userData["uid"], // user uid - **note lowercase 'd'**
                 ),
               ),
             );
@@ -208,10 +215,9 @@ class _HomePageState extends State<HomePage> {
                   // Avatar circle with first letter of username
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.1),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
                     child: Text(
                       userData['username']?[0].toUpperCase() ?? '?',
                       style: TextStyle(
@@ -223,25 +229,24 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(width: 16),
 
-                  // User info
+                  // User info column: username and last message preview
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           userData['username'] ?? 'Unknown User',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           preview,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
                               ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -250,15 +255,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
-                  // Timestamp
+                  // Timestamp for last message, if available
                   if (time != null)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Text(
                         time,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                     ),
                 ],
