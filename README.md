@@ -19,7 +19,12 @@ A minimalist Flutter chat application built while following [Flutter Firebase Ch
 
 ## 📸 Screenshots
 
-*Coming soon...*
+![Login Screen](assets/screenshots/brightmode/login.png)
+![Signup Screen](assets/screenshots/brightmode/signup.png)
+![Home Screen](assets/screenshots/brightmode/home.png)
+![Loading Screen](assets/screenshots/brightmode/drawer.png)
+![Edit Screen](assets/screenshots/brightmode/settings.png)
+![Edit Screen](assets/screenshots/brightmode/change_user_name.png)
 
 ---
 
