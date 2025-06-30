@@ -66,4 +66,27 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  //lastmessage
+  Future<String?> getLastMessage(String userId, String otherUserId) async {
+    final chatId = _getChatId(userId, otherUserId);
+
+    final snapshot = await _firestore
+        .collection('messages')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first['message'] as String;
+    }
+
+    return null; // no message yet
+  }
+
+  String _getChatId(String uid1, String uid2) {
+    return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
+  }
 }

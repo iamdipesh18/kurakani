@@ -2,73 +2,126 @@ import 'package:flutter/material.dart';
 import 'package:kurakani/services/auth/auth_service.dart';
 import 'package:kurakani/pages/settings_page.dart';
 
+/// A custom app drawer used in the app for quick navigation and logout.
 class MyDrawer extends StatelessWidget {
-  const MyDrawer({super.key});
+  /// Callback triggered when user taps "Change Username"
+  final VoidCallback? onChangeUsernameTap;
 
-    void logout() {
-    //get the auth service
+  const MyDrawer({super.key, this.onChangeUsernameTap});
+
+  /// Sign out using the AuthService
+  void logout() {
     final auth = AuthService();
     auth.signOut();
   }
 
+  /// Show a snackbar confirmation for username update
+  static void showUsernameUpdateConfirmation(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Username updated successfully!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: colorScheme.surface,
+      elevation: 2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(0),
+          bottomRight: Radius.circular(0),
+        ),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          //logo
+          // ── Logo + Navigation ──
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DrawerHeader(
                 child: Center(
                   child: Icon(
-                    Icons.message,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 40,
+                    Icons.message_rounded,
+                    color: colorScheme.primary,
+                    size: 48,
                   ),
                 ),
               ),
-              //home list tile
-              Padding(
-                padding: const EdgeInsets.only(left: 25),
-                child: ListTile(
-                  title: const Text('H O M E'),
-                  leading: Icon(Icons.home),
-                  onTap: () {
-                    //pop the drawer
-                    Navigator.pop(context);
-                  },
+
+              // Home
+              ListTile(
+                leading: Icon(Icons.home, color: colorScheme.primary),
+                title: Text(
+                  'Home',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                 ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer only
+                },
               ),
 
-              //setting list tile
-              Padding(
-                padding: const EdgeInsets.only(left: 25),
-                child: ListTile(
-                  title:const Text('S E T T I N G S'),
-                  leading: Icon(Icons.settings),
-                  onTap: () {
-                    //pop the drawer
-                    Navigator.pop(context);
-                    //navigate to settings page
-                    Navigator.push(context,MaterialPageRoute(
-                      builder: (context)=>SettingsPage(),
-                      ),
-                      );
-                  },
+              // Settings
+              ListTile(
+                leading: Icon(Icons.settings, color: colorScheme.primary),
+                title: Text(
+                  'Settings',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                 ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsPage()),
+                  );
+                },
+              ),
+
+              // Change Username
+              ListTile(
+                leading: Icon(Icons.edit, color: colorScheme.primary),
+                title: Text(
+                  'Change Username',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (onChangeUsernameTap != null) {
+                    onChangeUsernameTap!();
+                    // Show confirmation AFTER username change logic completes
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      showUsernameUpdateConfirmation(context);
+                    });
+                  }
+                },
               ),
             ],
           ),
 
-          //log out list tile
+          // ── Logout (Bottom-aligned) ──
           Padding(
-            padding: const EdgeInsets.only(left: 25, bottom: 25),
+            padding: const EdgeInsets.only(left: 8, bottom: 12),
             child: ListTile(
-              title:const Text('L O G O U T'),
-              leading: Icon(Icons.logout),
+              leading: Icon(Icons.logout, color: colorScheme.error),
+              title: Text(
+                'Logout',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.error,
+                ),
+              ),
               onTap: logout,
             ),
           ),

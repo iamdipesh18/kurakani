@@ -6,16 +6,16 @@ import 'package:kurakani/components/my_textfield.dart';
 import 'package:kurakani/services/auth/auth_service.dart';
 import 'package:kurakani/services/chat/chat_service.dart';
 
-/// Chat screen between current user and another user
+/// The private chat screen between two users.
 class ChatPage extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
 
   const ChatPage({
-    Key? key,
+    super.key,
     required this.receiverEmail,
     required this.receiverID,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -29,7 +29,7 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
 
-  /// Scroll to latest message
+  /// Scrolls to the newest message in the list.
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -42,7 +42,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  /// Send message
+  /// Sends a message and scrolls to the bottom
   void sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
@@ -52,142 +52,137 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  /// Shows options when a message is long-pressed
+  /// Opens the bottom sheet with "Report" or "Block" options
   void _showOptionsSheet() {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.flag),
-                title: const Text('Report User'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmReport();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.block),
-                title: const Text('Block User'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmBlock();
-                },
-              ),
-              const Divider(height: 0),
-              ListTile(
-                leading: const Icon(Icons.close),
-                title: const Text('Cancel'),
-                onTap: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.flag),
+              title: const Text('Report User'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmReport();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.block),
+              title: const Text('Block User'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmBlock();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Cancel'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  /// Step 1: Confirm before reporting
+  /// First confirmation dialog for reporting
   void _confirmReport() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Report User"),
-          content: const Text("Are you sure you want to report this user?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showReportReasonDialog();
-              },
-              child: const Text("Yes"),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text("Report User"),
+        content: const Text("Are you sure you want to report this user?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("No"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showReportReasonDialog();
+            },
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
     );
   }
 
-  /// Step 2: Ask for reason and report
+  /// Second dialog asking for the reason of reporting
   void _showReportReasonDialog() {
-    final TextEditingController reasonController = TextEditingController();
+    final controller = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Report Reason"),
-          content: TextField(
-            controller: reasonController,
-            decoration: const InputDecoration(
-              hintText: "Enter the reason for reporting",
-            ),
+      builder: (_) => AlertDialog(
+        title: const Text("Reason for Reporting"),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: "Enter your reason...",
+            border: OutlineInputBorder(),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                final reason = reasonController.text.trim();
-                if (reason.isNotEmpty) {
-                  await _chatService.reportUser(widget.receiverID, reason);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("User has been reported.")),
-                  );
-                }
-              },
-              child: const Text("Submit"),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              final reason = controller.text.trim();
+              if (reason.isNotEmpty) {
+                await _chatService.reportUser(widget.receiverID, reason);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("User has been reported")),
+                );
+              }
+            },
+            child: const Text("Submit"),
+          ),
+        ],
+      ),
     );
   }
 
-  /// Confirm before blocking
+  /// Confirmation dialog to block a user
   void _confirmBlock() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Block User"),
-          content: const Text("Are you sure you want to block this user?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _chatService.blockUser(widget.receiverID);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("User has been blocked.")),
-                );
-              },
-              child: const Text("Yes"),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text("Block User"),
+        content: const Text("Are you sure you want to block this user?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("No"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _chatService.blockUser(widget.receiverID);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("User has been blocked")),
+              );
+              Navigator.pop(context); // Go back to home after block
+            },
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
     );
   }
 
-  /// Stream of chat messages between current user and receiver
+  /// Builds the stream of chat messages
   Widget _buildMessageList() {
     final currentUserId = _authService.getCurrentUser()!.uid;
 
@@ -217,29 +212,30 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  /// Each chat message bubble
+  /// Renders each message bubble
   Widget _buildMessageItem(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    final bool isMe = data['senderId'] == _authService.getCurrentUser()!.uid;
+    final data = doc.data() as Map<String, dynamic>;
+    final isMe = data['senderId'] == _authService.getCurrentUser()!.uid;
 
-    final Timestamp timestamp = data['timestamp'];
-    final String formattedTime = DateFormat(
+    final formattedTime = DateFormat(
       'h:mm a',
-    ).format(timestamp.toDate());
+    ).format((data['timestamp'] as Timestamp).toDate());
 
     return ChatBubble(
       message: data['message'],
       isMe: isMe,
       timestamp: formattedTime,
-      receiverId: widget.receiverID, // 👈 Add this
-      receiverEmail: widget.receiverEmail, // 👈 Add this
+      receiverId: widget.receiverID,
+      receiverEmail: widget.receiverEmail,
     );
   }
 
-  /// Text input & send button at bottom
+  /// Textfield + Send button UI
   Widget _buildUserInput() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
       child: Row(
         children: [
           Expanded(
@@ -252,13 +248,13 @@ class _ChatPageState extends State<ChatPage> {
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
+              color: colorScheme.primary,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  color: colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -284,12 +280,17 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () => FocusScope.of(context).unfocus(), // dismiss keyboard
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.receiverEmail),
           centerTitle: true,
-          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: _showOptionsSheet,
+            ),
+          ],
         ),
         body: Column(
           children: [

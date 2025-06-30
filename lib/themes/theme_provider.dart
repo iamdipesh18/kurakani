@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:kurakani/themes/light_mode.dart';
-import 'package:kurakani/themes/dark_mode.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  // Private variable to track theme
-  ThemeData _themeData = lightMode;
+  bool _isDarkMode = false;
 
-  // Getter to expose the current theme
-  ThemeData get themeData => _themeData;
+  bool get isDarkMode => _isDarkMode;
 
-  // Toggles between light and dark modes
+  ThemeData get themeData =>
+      _isDarkMode ? _darkThemeData : _lightThemeData;
+
   void toggleTheme() {
-    if (_themeData == lightMode) {
-      _themeData = darkMode;
-    } else {
-      _themeData = lightMode;
-    }
-    notifyListeners(); // Notify listeners to rebuild UI
-  }
-
-  // Optional: allow setting theme externally
-  set themeData(ThemeData theme) {
-    _themeData = theme;
+    _isDarkMode = !_isDarkMode;
     notifyListeners();
   }
 
-  // Whether current theme is dark
-  bool get isDarkMode => _themeData == darkMode;
+  ThemeData get _darkThemeData => ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+      );
+
+  ThemeData get _lightThemeData => ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.light,
+        ),
+      );
 }

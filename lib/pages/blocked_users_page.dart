@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kurakani/services/chat/chat_service.dart';
 import 'package:kurakani/services/auth/auth_service.dart';
 
+/// A page showing all users blocked by the current user.
 class BlockedUserPage extends StatefulWidget {
   const BlockedUserPage({super.key});
 
@@ -14,10 +15,10 @@ class _BlockedUserPageState extends State<BlockedUserPage> {
   final AuthService _authService = AuthService();
 
   /// Confirm and unblock a user
-  void _confirmUnblock(String blockedUserId) {
+  void _confirmUnblock(String userId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('Unblock User'),
         content: const Text('Are you sure you want to unblock this user?'),
         actions: [
@@ -27,8 +28,8 @@ class _BlockedUserPageState extends State<BlockedUserPage> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // close dialog
-              await _chatService.unblockUser(blockedUserId);
+              await _chatService.unblockUser(userId);
+              Navigator.pop(context);
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text("User unblocked")));
@@ -57,26 +58,22 @@ class _BlockedUserPageState extends State<BlockedUserPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final blockedUsers = snapshot.data ?? [];
+          final users = snapshot.data ?? [];
 
-          if (blockedUsers.isEmpty) {
-            return const Center(
-              child: Text('No blocked users', style: TextStyle(fontSize: 16)),
-            );
+          if (users.isEmpty) {
+            return const Center(child: Text("You haven't blocked anyone."));
           }
 
           return ListView.builder(
-            itemCount: blockedUsers.length,
+            itemCount: users.length,
             itemBuilder: (context, index) {
-              final user = blockedUsers[index];
-              final userId = user['uid'];
-              final userEmail = user['email'];
+              final user = users[index];
 
               return ListTile(
-                leading: const Icon(Icons.person_off),
-                title: Text(userEmail ?? 'Unknown'),
+                leading: const Icon(Icons.person_off_outlined),
+                title: Text(user['email'] ?? 'Unknown'),
                 trailing: TextButton(
-                  onPressed: () => _confirmUnblock(userId),
+                  onPressed: () => _confirmUnblock(user['uid']),
                   child: const Text('Unblock'),
                 ),
               );

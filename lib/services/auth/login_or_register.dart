@@ -2,34 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:kurakani/pages/login_page.dart';
 import 'package:kurakani/pages/register_page.dart';
 
-class LoginOrRegister extends StatefulWidget {
-  const LoginOrRegister({super.key});
+/// Stateless toggle between login and register,
+/// controlled from AppRoot to persist state on rebuild.
+class LoginOrRegister extends StatelessWidget {
+  final bool showLoginPage;
+  final VoidCallback onToggle;
 
-  @override
-  State<LoginOrRegister> createState() => _LoginOrRegisterState();
-}
-
-class _LoginOrRegisterState extends State<LoginOrRegister> {
-  // initially show the login page
-  bool showLoginPage = true;
-
-  //toggle between login and register page
-  void togglePages() {
-    setState(() {
-      showLoginPage = !showLoginPage;
-    });
-  }
+  const LoginOrRegister({
+    super.key,
+    required this.showLoginPage,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (showLoginPage) {
-      return LoginPage(
-        onTap: togglePages,
-      );
-    } else {
-      return RegisterPage(
-        onTap: togglePages,
-      );
-    }
+    return showLoginPage
+        ? LoginPage(onTap: onToggle)
+        : RegisterPage(onTap: onToggle);
   }
 }

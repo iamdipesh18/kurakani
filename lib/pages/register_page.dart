@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:kurakani/services/auth/auth_service.dart';
 import 'package:kurakani/components/labeled_textfield.dart';
 import 'package:kurakani/components/my_button.dart';
+import 'package:kurakani/services/auth/auth_service.dart';
+import 'package:kurakani/components/toggle_widget_for_signin_reg.dart'; // <-- don't forget this import
 
+/// Registration page UI using a minimal and user-friendly form
 class RegisterPage extends StatefulWidget {
   final void Function()? onTap;
+
   const RegisterPage({super.key, required this.onTap});
 
   @override
@@ -17,12 +20,15 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _confirmedPasswordController =
       TextEditingController();
 
+  /// Sign up method using AuthService. Shows error if anything fails.
   void register() async {
     if (_passwordController.text != _confirmedPasswordController.text) {
       showDialog(
         context: context,
-        builder: (context) =>
-            const AlertDialog(title: Text("Passwords do not match")),
+        builder: (_) => const AlertDialog(
+          title: Text("Password Mismatch"),
+          content: Text("Passwords do not match."),
+        ),
       );
       return;
     }
@@ -35,12 +41,12 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       if (!mounted) return;
 
-      // Optional: Navigate or show success message
+      // Optional: Navigate or show welcome screen
     } catch (e) {
       if (!mounted) return;
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (_) => AlertDialog(
           title: const Text("Registration Failed"),
           content: Text(e.toString()),
         ),
@@ -50,78 +56,87 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Inside your build method
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: SingleChildScrollView(
-          // For smaller screens
-          padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.message,
-                size: 60,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 50),
-              Text(
-                "Let's Create an Account for You!",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 25),
-              LabeledTextField(
-                labelText: 'Email',
-                hintText: 'Enter Email',
-                obscureText: false,
-                controller: _emailController,
-              ),
-              const SizedBox(height: 10),
-              LabeledTextField(
-                labelText: 'Password',
-                hintText: 'Enter Password',
-                obscureText: true,
-                controller: _passwordController,
-              ),
-              const SizedBox(height: 10),
-              LabeledTextField(
-                labelText: 'Confirm Password',
-                hintText: 'Re-enter Password',
-                obscureText: true,
-                controller: _confirmedPasswordController,
-              ),
-              const SizedBox(height: 25),
-              MyButton(text: 'Register', onTap: register),
-              const SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Already a Member? ",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 16,
+      backgroundColor: colorScheme.surface,
+      body: Stack(
+        children: [
+          // Main registration UI
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1,
+                      size: 60,
+                      color: colorScheme.primary,
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: widget.onTap,
-                    child: Text(
-                      "Login Now",
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 40),
+                    Text(
+                      "Create a New Account",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 30),
+                    LabeledTextField(
+                      labelText: 'Email',
+                      hintText: 'Enter email',
+                      obscureText: false,
+                      controller: _emailController,
+                    ),
+                    const SizedBox(height: 12),
+                    LabeledTextField(
+                      labelText: 'Password',
+                      hintText: 'Enter password',
+                      obscureText: true,
+                      controller: _passwordController,
+                    ),
+                    const SizedBox(height: 12),
+                    LabeledTextField(
+                      labelText: 'Confirm Password',
+                      hintText: 'Re-enter password',
+                      obscureText: true,
+                      controller: _confirmedPasswordController,
+                    ),
+                    const SizedBox(height: 30),
+                    MyButton(text: 'Register', onTap: register),
+                    const SizedBox(height: 25),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already a member? ",
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        GestureDetector(
+                          onTap: widget.onTap,
+                          child: Text(
+                            "Login now",
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+
+          // 🔘 Top-right theme toggle button
+          const Positioned(top: 16, right: 16, child: ThemeToggleAuthButton()),
+        ],
       ),
     );
   }

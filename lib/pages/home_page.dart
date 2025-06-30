@@ -1,72 +1,268 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:kurakani/components/my_drawer.dart';
-import 'package:kurakani/components/user_tile.dart';
 import 'package:kurakani/pages/chat_page.dart';
-import 'package:kurakani/services/auth/auth_service.dart';
+import 'package:kurakani/pages/settings_page.dart';
 import 'package:kurakani/services/chat/chat_service.dart';
+import 'package:kurakani/services/auth/auth_service.dart';
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
+/// ✅ HomePage displays a list of users available for chat
+/// with last message preview and timestamp inside beautiful cards.
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
-  //chat and auth services
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndPromptUsername();
+  }
+
+  /// 🔎 Prompt user for username if it's missing after sign-up
+  Future<void> _checkAndPromptUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userDoc = await _firestore.collection("Users").doc(user.uid).get();
+    final data = userDoc.data();
+
+    if (data == null || !(data).containsKey("username") || (data['username'] as String).isEmpty) {
+      await Future.delayed(Duration.zero); // Ensure build context is ready
+      _showUsernameDialog(isInitialPrompt: true);
+    }
+  }
+
+  /// 🧾 Show dialog to prompt user to choose or change a username
+  void _showUsernameDialog({bool isInitialPrompt = false}) {
+    final controller = TextEditingController();
+
+    showDialog(
+      barrierDismissible: !isInitialPrompt, // Prevent dismiss on first-time prompt
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isInitialPrompt ? "Choose a username" : "Change your username"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(isInitialPrompt
+                ? "This will be your permanent username."
+                : "Update your username. Others will see this name."),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: "Username",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (!isInitialPrompt)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+          TextButton(
+            onPressed: () async {
+              final username = controller.text.trim();
+              if (username.isEmpty) return;
+
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) return;
+
+              final userDoc = _firestore.collection("Users").doc(user.uid);
+              await userDoc.set({"username": username}, SetOptions(merge: true));
+              if (!mounted) return;
+              Navigator.pop(context);
+              setState(() {});
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Home'), centerTitle: true),
-      drawer: MyDrawer(),
+      appBar: AppBar(
+        title: Text(
+          'Chats',
+          style: theme.textTheme.titleLarge?.copyWith(color: textColor),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      drawer: MyDrawer(
+        onChangeUsernameTap: () => _showUsernameDialog(isInitialPrompt: false),
+      ),
       body: _buildUserList(context),
     );
   }
 
+  /// 🔁 Loads all users excluding those blocked by or who blocked the current user.
   Widget _buildUserList(BuildContext context) {
     return StreamBuilder(
       stream: _chatService.getUsersStreamExcludingBlocked(),
       builder: (context, snapshot) {
-        //error
         if (snapshot.hasError) {
           return const Center(child: Text("Error loading users"));
         }
 
-        //loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        //data
         final users = snapshot.data!;
-        return ListView(
-          children: users.map<Widget>((userData) {
-            return _buildUserListItem(userData, context);
-          }).toList(),
+        if (users.isEmpty) {
+          return const Center(
+            child: Text("No users available", style: TextStyle(fontSize: 16)),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          itemCount: users.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final userData = users[index];
+            return _buildUserCard(userData, context);
+          },
         );
       },
     );
   }
 
-  // Individual List Tile for a User
-  Widget _buildUserListItem(
+  /// ✅ Builds each user card with avatar, username, last message preview and timestamp.
+  Widget _buildUserCard(
     Map<String, dynamic> userData,
     BuildContext context,
   ) {
     final currentUser = FirebaseAuth.instance.currentUser!;
-    if (currentUser.email == userData["email"]) {
-      return const SizedBox.shrink(); // Don't show yourself
+    if (currentUser.uid == userData["uid"]) {
+      return const SizedBox.shrink(); // Don't show self
     }
 
-    return UserTile(
-      text: userData["email"],
-      onTap: () {
-        // Navigate to chat page with selected user
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(
-              receiverEmail: userData["email"],
-              receiverID: userData["uid"],
+    return FutureBuilder<Map<String, dynamic>?> (
+      future: _chatService.getLastMessageWithMeta(
+        currentUser.uid,
+        userData['uid'],
+      ),
+      builder: (context, snapshot) {
+        String preview = "Say hi 👋";
+        String? time;
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final data = snapshot.data!;
+          final message = data['message'] ?? '';
+          final senderId = data['senderId'] ?? '';
+          final ts = data['timestamp'];
+
+          if (message.isNotEmpty) {
+            preview = senderId == currentUser.uid ? "You: $message" : message;
+          }
+
+          if (ts != null && ts is Timestamp) {
+            time = DateFormat('h:mm a').format(ts.toDate());
+          }
+        }
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatPage(
+                  receiverEmail: userData["email"],
+                  receiverID: userData["uid"],
+                ),
+              ),
+            );
+          },
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Avatar circle with first letter of username
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.1),
+                    child: Text(
+                      userData['username']?[0].toUpperCase() ?? '?',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // User info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userData['username'] ?? 'Unknown User',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          preview,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7),
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Timestamp
+                  if (time != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        time,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         );

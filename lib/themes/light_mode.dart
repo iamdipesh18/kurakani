@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 final ThemeData lightMode = ThemeData(
-  useMaterial3: true, // Enables Material You design
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: Colors.teal,
-    brightness: Brightness.light,
+  useMaterial3: true,
+  brightness: Brightness.light,
+  colorScheme: ColorScheme.light(
+    primary: Colors.teal,
+    secondary: Colors.tealAccent,
+    surface: Colors.white,
+    background: Colors.grey.shade100,
   ),
   scaffoldBackgroundColor: Colors.grey.shade100,
   appBarTheme: const AppBarTheme(
@@ -13,22 +16,31 @@ final ThemeData lightMode = ThemeData(
     centerTitle: true,
     titleTextStyle: TextStyle(
       fontSize: 20,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.w600,
       color: Colors.black87,
     ),
-    iconTheme: IconThemeData(color: Colors.black87),
+    iconTheme: IconThemeData(color: Colors.black54),
   ),
   textTheme: const TextTheme(
-    bodyMedium: TextStyle(fontSize: 16, color: Colors.black87),
-    titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    bodyMedium: TextStyle(fontSize: 15, color: Colors.black87),
+    titleLarge: TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w600,
+      color: Colors.black,
+    ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide.none,
     ),
   ),
+  // cardTheme: CardTheme(
+  //   color: Colors.white,
+  //   elevation: 1,
+  //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  // ),
 );
